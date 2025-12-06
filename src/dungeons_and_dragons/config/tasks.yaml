@@ -1,0 +1,353 @@
+# =========================
+# WORLD SETUP CREW
+# =========================
+setup_world:
+  description: >
+    Generate the campaign setting, factions, and initial story premise. Guarantee that at
+    least one important NPC is defined with personality, motivation, and ties to the central story.
+  expected_input: >
+    { "input_text": "Initialize the game world with at least 1 important NPC" }
+  expected_output: >
+    Structured description including:
+      1. Geography (towns, landscapes, dungeons)
+      2. Lore/history (conflicts, myths, threats)
+      3. At least 1 faction or power group
+      4. At least 1 key NPC with role, name, motivation, and influence on story
+  constraints: >
+    Must be consistent across future queries. NPC must be pivotal to story progression.
+  agent: world_agent
+
+structure_world:
+  description: >
+    Convert the narrative world description produced by world_agent into a
+    **strict JSON object** that exactly matches the world_schema, filling in
+    all required properties by interpreting the narrative. Extract NPCs and
+    factions from the description and ensure they follow their respective
+    schemas (npc_schema, faction_schema). Enforce proper structure across fields.
+  expected_input: >
+    Narrative description of the world (from world_agent).
+  expected_output: >
+    A JSON object conforming strictly to world_schema, with:
+      - name: world name
+      - theme: short descriptor of the world’s theme
+      - terrain_desc: summary of major geography and terrains
+      - starting_region: the initial region where gameplay begins
+      - factions: non-empty array of faction objects, each following the faction_schema with an unique faction_id
+      - npc: non-empty array of NPC objects, each following the npc_schema with an unique npc_id
+      - lore: a non-empty string summarizing world lore
+  constraints: >
+    - Output MUST be valid JSON only (no markdown, no commentary).
+    - The JSON object must directly represent the world without extra nesting.
+    - All values must be raw strings or arrays.
+    - Do NOT use {"type": "string"} or similar — use plain JSON values.
+    - World: must include "name", "theme", "terrain_desc", "starting_region", "lore", and can include factions[], npc[] if any
+    - Factions: must include "faction_id", "name" and can include other information if any
+    - NPCs: must include "npc_id", "name", "desc", and can include faction, characteristics[] if any
+    - Always generate unique "string" IDs for faction_id and npc_id.
+    - If any required fields are missing in the narrative, infer reasonable defaults.
+    - Do NOT use the save_world tool here — just output the JSON object
+  agent: scribe_agent
+
+
+# =========================
+# PREGAME SCENE SETUP CREW
+# =========================
+pregame_scene:
+  description: >
+    Generate the opening scene narrative for ORION: setting, ambiance, at least one
+    intriguing NPC or tension, hints of lore. This is meant to draw the player into the world.
+  expected_input: >
+    { "input_text": "Create an opening scene narrative with immersive detail" }
+  expected_output: >
+    A scene‐style narrative text that includes setting description, sensory detail,
+    hints of conflict or mystery and NPC or faction interaction or presence if relevant.
+  constraints: >
+    - Must align with world_agent lore, NPCs/factions already created.
+    - Use vivid detail: at least two sensory modalities (sight, sound, smell, etc).
+    - Must not enumerate choices here.
+  agent: dungeon_master
+
+# =========================
+# PREGAME CHOICES SETUP CREW
+# =========================
+pregame_choices:
+  description: >
+    Generate at least 3 initial character choices or initial situation choices for the
+    player, reflecting different styles or values. All the choices should feel compelling and distinct.
+    These choices help the player identify with one approach to begin the journey.
+  expected_input: >
+    { "scene_context": scene narrative from pregame_scene }
+  expected_output: >
+    List of at least 3 narrative choices, each described with title, description, narration of what the player experiences if choosing it.
+  constraints: >
+    - Choices should feel distinct in tone or consequence.
+    - Must reflect the world setup.
+    - No need to branch deeply yet: it's about flavor and player investment.
+  agent: dungeon_master
+
+
+# =========================
+# PLAYER INTERACTION CREW
+# =========================
+resolve_player_choice:
+  description: >
+    Given the list of choices: {available_choices} and the player’s action text: {player_action}, 
+    match the player action to the closest choice, and return the matched choice ID and
+    choice data matching the choice_schema if matching is successful.
+  expected_input: >
+    { 
+      "player_action": {player_action}, 
+      "available_choices": {available_choices},
+    }
+  expected_output: >
+    {
+      "status": "success",
+      "choice": {
+        <matched choice object>
+      }
+    }
+    OR
+    {
+      "status": "retry"
+    }
+  constraints: >
+    - Semantic similarity should be used to match player_action to available choices.
+    - If confidence is too low, return retry message and list valid options.
+    - Must always return choice info in structured JSON, if the "status" is "success".
+    - The returned JSON must always include "status" key with its corresponding value being either "success" or "retry".
+  agent: choice_agent
+
+
+# ================================
+# STORY SCENE PROGRESSION CREW
+# ================================
+progress_scene:
+  description: >
+    Generate the next scene narrative that meaningfully continues the story from the
+    current point. The scene must consider the current story progression: {current_story_progression},
+    and the player's recent action: {player_action} and choice: {choice}. It should feel like a natural continuation
+    of the story — never random or disjointed — and push the player closer to the current story’s plot, however small the step.
+  expected_input: >
+    {
+      "current_story_progression": "Summarized story text or context so far",
+      "choice": "Player’s last chosen option with description and consequence",
+      "player_action": "Free-form text of player’s described action"
+    }
+  expected_output: >
+    A cohesive scene-style narrative that includes:
+      - Natural continuity from the last choice and player action.
+      - Reflection of how the world or NPCs or Factions (if involved) respond to the player’s decision.
+      - Subtle movement in the overarching plot direction or sub-goal progression.
+      - Clear emotional or narrative tone.
+  constraints: >
+    - The new scene must connect logically to previous events.
+    - The pacing should vary naturally — not every scene needs high drama, but all must feel purposeful.
+    - Include at least one new detail (environmental change, reaction, clue, consequence or anything that makes sense to that scene).
+    - No explicit listing of player choices here.
+    - Maintain consistent world lore, NPC motivations, and tone.
+  agent: dungeon_master
+
+
+# ==================================
+# STORY CHOICES PROGRESSION CREW
+# ==================================
+progress_choices:
+  description: >
+    Generate 2–4 meaningful narrative choices the player can take next,
+    directly informed by the previous scene: {scene_context} amd story progression so far: {current_story_progression}.
+    Each choice should feel like a natural and informed decision that a player,
+    aware of what has already happened, could reasonably make within this scene’s context.
+  expected_input: >
+    {
+      "current_story_progression": "Summarized story text or context so far",
+      "scene_context": "scene narrative from progress_scene"
+    }
+  expected_output: >
+    A list of 2–4 distinct narrative choices, each including:
+      - title: short label for the action
+      - description: brief contextual reasoning or motivation behind this action
+      - narration: immersive narrative snippet describing what happens if the player starts taking this action
+  constraints: >
+    - All choices must logically follow from the latest scene’s context and what the player knows.
+    - None of the choices may contradict established events or lore.
+    - Each choice should nudge the story toward one or more of the overarching plot outcomes.
+    - Avoid redundant or filler choices (every option must matter).
+  agent: dungeon_master
+
+# ==========================
+# STORY SUMMARY CREW
+# ==========================
+summarize_story_progression:
+  description: >
+    Summarize the ongoing story progression to maintain narrative coherence, given the current story progression: {current_story_progression}.
+    This task ensures that important character actions, emotional beats, and unresolved plot points are
+    retained, while redundant or less relevant details are compressed or removed.
+    The summary must be compact enough to fit within the LLM context window and
+    must capture the tone and pacing of the narrative so far.
+  expected_input: >
+    {
+      "current_story_progression": "Full text or record of story events so far",
+    }
+  expected_output: >
+    A short narrative summary that captures:
+      - The main events and player choices up to this point
+      - The current state of the story
+      - Any major unresolved situation or tension
+  constraints: >
+    - Must maintain chronological and logical flow.
+    - Should sound natural and narrative-driven.
+    - Do not include bullet points or lists; use cohesive storytelling language.
+    - Output plain text only (no markdown, no JSON).
+  agent: dungeon_master
+
+# ==========================
+# STORY CONVERGENCE CREW
+# ==========================
+generate_plot_skeleton:
+  description: >
+    After sufficient story progression: {current_story_progression}, analyze the accumulated story content
+    and construct a concise plot skeleton that captures the narrative flow so far and identifies
+    key turning points, themes, unresolved tensions, and player-influenced directions.
+    This plot skeleton forms the foundation for generating possible endings.
+  expected_input: >
+    {
+      "current_story_progression": "Summarized record of story events up to this point"
+    }
+  expected_output: >
+    A textual, structured plot skeleton containing:
+      - Key story arcs or acts so far
+      - The protagonist's current trajectory and motivations
+      - The major unresolved conflicts or mysteries
+      - Emotional or thematic through-lines
+      - Narrative hooks or potential climaxes that could lead to distinct endings
+  constraints: >
+    - Must compress narrative into clear act-like beats or sequences.
+    - Should highlight what makes each current storyline direction unique or branching-worthy.
+    - Output plain text; no JSON.
+  agent: dungeon_master
+
+# =========================
+# STORY ENDING CREW
+# =========================
+overarching_plot:
+  description: >
+    After several player decisions, solidify an overarching central plot that ties together
+    the story, NPCs, and world. This ensures all future branches converge towards a
+    meaningful resolution.
+  expected_input: >
+    { "input_text": "Define central overarching plot" }
+  expected_output: >
+    One unifying plotline that incorporates:
+      - World conflicts
+      - The important NPC’s role
+      - A clear goal or looming threat
+  constraints: >
+    Must lock the narrative direction. All future choices must serve this plot.
+  agent: dungeon_master
+
+ending:
+  description: >
+    Conclude the story based on the overarching plot and the player’s last choices.
+    Deliver a satisfying resolution that feels earned, whether victory, tragedy,
+    or bittersweet.
+  expected_input: >
+    { "input_text": "Conclude story based on overarching plot and choices" }
+  expected_output: >
+    A final narrative scene that wraps up the story and player’s journey.
+  constraints: >
+    Must provide closure. NPC roles must be resolved.
+  agent: dungeon_master
+
+
+# =========================
+# NPC INTERACTIONS CREW
+# =========================
+npc_interaction:
+  description: >
+    Handle dialogue and actions when the player encounters a major NPC. Drive story
+    progression through their personality, secrets, and goals.
+  expected_input: >
+    { "input_text": "Roleplay NPC interaction" }
+  expected_output: >
+    - Multi-turn dialogue
+    - NPC decision points that shape story progression
+  constraints: >
+    Must remain faithful to NPC established in setup_world.
+  agent: npc_agent
+
+role_assignment:
+  description: >
+    Assigns roles, backstories, and motivations to NPCs in the world. 
+    Each NPC should have a clear purpose in the story, unique personality traits, 
+    and potential influence on the player’s journey. 
+    Ensure that NPCs can interact dynamically with the player and align with the world’s lore.
+  expected_output: >
+    A structured list of NPCs with names, roles, motivations, and personality traits. 
+    Example format:
+    - Name: Arin, the Tavern Keeper
+      Role: Provides quests and gossip about the town
+      Motivation: Wants to protect his daughter from looming threats
+      Personality: Gruff but kind-hearted
+    - Name: Selira, Forest Witch
+      Role: Offers magical aid in exchange for rare ingredients
+      Motivation: Preserve the balance of nature
+      Personality: Cryptic, mischievous, and sharp-witted
+  agent: npc_setup
+
+
+# =========================
+# COMMON TASKS
+# =========================
+structure_scene:
+  description: >
+    Convert the narrative scene description produced by dungeon_master into a
+    **strict JSON object** that exactly matches the scene_schema, filling in
+    all required properties by interpreting the narrative. Enforce proper
+    structure across fields.
+  expected_input: >
+    Narrative description of the scene (from dungeon_master).
+  expected_output: >
+    A JSON object conforming strictly to scene_schema, with:
+      - scene_id: unique "string" ID for the scene
+      - title: short title for the scene
+      - description: detailed summary of the scene
+      - narration: immersive narrative text for the scene
+  constraints: >
+    - Output MUST be valid JSON only (no markdown, no commentary).
+    - The JSON object must directly represent the scene without extra nesting.
+    - All values must be raw strings, numbers, or arrays.
+    - Do NOT use {"type": "string"} or similar — use plain JSON values.
+    - Scene: must include "scene_id", "description", "narration" and other information if any.
+    - Always generate unique "string" IDs for scene_id.
+    - If any required fields are missing in the narrative, infer reasonable defaults.
+    - Do NOT use the save_scene tool here — just output the JSON object
+  agent: scribe_agent
+
+structure_choice:
+  description: >
+    Convert the narrative choices produced by dungeon_master into a **strict JSON array** of
+    choice objects that exactly match the choice_schema. Ensure that all required properties are populated consistently with the narrative context.
+    This task does NOT invent, expand, or interpret beyond what dungeon_master has already written. It only reformats.
+    Each Dungeon Master choice maps to one JSON object only.
+  expected_input: >
+    Narrative description of the choices (from dungeon_master).
+  expected_output: >
+    A JSON array of objects conforming strictly to choice_schema, where each object includes:
+      - choice_id: unique "string" ID for the choice
+      - title: short title of the choice
+      - description: explanation of the choice
+      - narration: immersive narrative text for the choice
+      - consequence: a summary of the outcome or effect of taking this choice
+  constraints: >
+    - Output MUST be valid JSON only (no markdown, no commentary).
+    - The JSON array must directly represent the choices without extra nesting.
+    - All values must be raw strings, numbers, or arrays.
+    - Do NOT use {"type": "string"} or similar — use plain JSON values.
+    - Do NOT add, modify, or invent new content. Only map what dungeon_master wrote.
+    - One JSON object per Dungeon Master choice block (do NOT invent sub-choices).
+    - Each choice must include "choice_id", "title", "description", "narration", "consequence".
+    - Always generate unique "string" IDs for each choice_id.
+    - If required fields are missing, infer reasonable defaults.
+    - Do NOT call the save_choice tool — just output the JSON array.
+  agent: scribe_agent
+

@@ -1,0 +1,18 @@
+character_schema = {
+    "type": "object",
+    "properties": {
+        "id": {"type": "string"},
+        "name": {"type": "string"},
+        "class": {"type": "string"},
+        "abilites": {
+            "type": "array",
+            "items": {"type": "string"}
+        },
+        "characteristics": {
+            "type": "array",
+            "items": {"type": "string"}
+        }
+    },
+    "required": ["id", "name", "characteristics"],
+    "optional": ["class", "abilities"]
+}
