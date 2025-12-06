@@ -1,54 +1,123 @@
-# DungeonsAndDragons Crew
+# ORION: Multi-Agent Dungeon Master for RPGs
 
-Welcome to the DungeonsAndDragons Crew project, powered by [crewAI](https://crewai.com). This template is designed to help you set up a multi-agent AI system with ease, leveraging the powerful and flexible framework provided by crewAI. Our goal is to enable your agents to collaborate effectively on complex tasks, maximizing their collective intelligence and capabilities.
+## Project Overview
 
-## Installation
+**ORION** is an AI-powered, multi-agent dungeon master system for role-playing games (RPGs) such as Dungeons & Dragons. Unlike traditional static adventure modules or single-model storytelling systems, ORION leverages **specialized agents coordinated through crews** to interpret player actions, maintain narrative coherence, and generate branching storylines.
 
-Ensure you have Python >=3.10 <3.14 installed on your system. This project uses [UV](https://docs.astral.sh/uv/) for dependency management and package handling, offering a seamless setup and execution experience.
+The system combines **natural language understanding, graph-based world modeling, and structured narrative orchestration** to enable both free-form roleplay and rule-consistent story progression.
 
-First, if you haven't already, install uv:
+---
 
-```bash
-pip install uv
-```
+## Features
 
-Next, navigate to your project directory and install the dependencies:
+* **World Generation:** `world_agent` builds a rich fantasy world including geography, factions, lore, and NPCs.
+* **Player Interaction:** `choice_agent` interprets free-form player inputs and maps them to valid narrative choices.
+* **Scene & Story Management:** `dungeon_master` orchestrates scene generation, branching story progression, and intermediate plot skeleton creation.
+* **Structured Recording:** `scribe_agent` persists all narrative elements in a **Neo4j knowledge graph**, ensuring consistent long-term memory.
+* **NPC Handling:** `npc_agent` and `npc_setup` roleplay key NPCs and assign meaningful narrative roles.
+* **Modular Crew Architecture:** Each task is handled by a dedicated crew to maintain stability, coherence, and scalability.
 
-(Optional) Lock the dependencies and install them by using the CLI command:
-```bash
-crewai install
-```
-### Customizing
+---
 
-**Add your `OPENAI_API_KEY` into the `.env` file**
+## Requirements
 
-- Modify `src/dungeons_and_dragons/config/agents.yaml` to define your agents
-- Modify `src/dungeons_and_dragons/config/tasks.yaml` to define your tasks
-- Modify `src/dungeons_and_dragons/crew.py` to add your own logic, tools and specific args
-- Modify `src/dungeons_and_dragons/main.py` to add custom inputs for your agents and tasks
-
-## Running the Project
-
-To kickstart your crew of AI agents and begin task execution, run this from the root folder of your project:
+* Python 3.10+
+* Neo4j 5.x or above
+* Python packages (install via pip):
 
 ```bash
-$ crewai run
+pip install -r requirements.txt
 ```
 
-This command initializes the dungeons_and_dragons Crew, assembling the agents and assigning them tasks as defined in your configuration.
+* `.env` file in project root containing:
 
-This example, unmodified, will run the create a `report.md` file with the output of a research on LLMs in the root folder.
+```
+NEO4J_URI=neo4j_uri
+NEO4J_USER=neo4j_username
+NEO4J_PASSWORD=neo4j_password
+```
 
-## Understanding Your Crew
+---
 
-The dungeons_and_dragons Crew is composed of multiple AI agents, each with unique roles, goals, and tools. These agents collaborate on a series of tasks, defined in `config/tasks.yaml`, leveraging their collective skills to achieve complex objectives. The `config/agents.yaml` file outlines the capabilities and configurations of each agent in your crew.
+## Setup Instructions
 
-## Support
+1. Clone this repository:
 
-For support, questions, or feedback regarding the DungeonsAndDragons Crew or crewAI.
-- Visit our [documentation](https://docs.crewai.com)
-- Reach out to us through our [GitHub repository](https://github.com/joaomdmoura/crewai)
-- [Join our Discord](https://discord.com/invite/X4JWnZnxPb)
-- [Chat with our docs](https://chatg.pt/DWjSBZn)
+```bash
+git clone https://github.com/username/ORION-DungeonMaster.git
+cd ORION-DungeonMaster
+```
 
-Let's create wonders together with the power and simplicity of crewAI.
+2. Install dependencies:
+
+```bash
+pip install -r requirements.txt
+```
+
+3. Start Neo4j and ensure credentials in `.env` match your local setup.
+
+4. Run the ORION system:
+
+```bash
+crewai run
+```
+
+---
+
+## How to Play
+
+* Enter your character actions in **natural language** (e.g., "I explore the tavern", "I confront the thief").
+
+* ORION will:
+
+  1. Match your input to valid narrative choices.
+  2. Generate the next scene using `dungeon_master`.
+  3. Persist the scene and choices in Neo4j.
+  4. Update a summary after every other scene and generate a plot skeleton after several scenes.
+
+* Type `quit` to exit the game.
+
+---
+
+## Expected Outputs
+
+* **Neo4j Graph**: Persistent story memory with nodes for worlds, scenes, choices, and NPCs.
+
+![Neo4j Graph](./media/neo4j_graph_example.png)
+
+* **Interactive Story**: Terminal-based narrative including scenes and player choices.
+
+![Terminal Gameplay](./media/terminal_gameplay_example.png)
+
+* **Plot Skeleton**: Summarized story arcs for guiding future endings.
+
+![Plot Skeleton](./media/plot_skeleton_example.png)
+
+---
+
+## Results
+
+* Stable, coherent multi-scene stories
+* Player actions interpreted and linked to choices
+* Branching narrative structure visible in Neo4j
+* Plot skeleton summarizes emerging story arcs
+
+*Note*: Full ending generation is planned as a next-step feature; currently, the system produces a plot skeleton after several scenes.
+
+---
+
+## Future Work
+
+* Structured ending generation using the plot skeleton
+* NPCs with goal-driven behavior and memory
+* Emotion and tension modeling for improved pacing
+* Multi-player support
+* Enhanced visualizations and dashboards for story analysis
+
+---
+
+## Acknowledgments
+
+This project was developed as part of the **Cognitive Systems** course at North Carolina State University under **Dr. Arnav Jhala**. His guidance and insights into cognitive architectures, narrative reasoning, and multi-agent systems were instrumental in shaping ORION.
+
+---
