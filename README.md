@@ -1,5 +1,7 @@
 # ORION: Multi-Agent Dungeon Master for RPGs
 
+![ORION Banner](./static/d&d_sample.png)
+
 ## Project Overview
 
 **ORION** is an AI-powered, multi-agent dungeon master system for role-playing games (RPGs) such as Dungeons & Dragons. Unlike traditional static adventure modules or single-model storytelling systems, ORION leverages **specialized agents coordinated through crews** to interpret player actions, maintain narrative coherence, and generate branching storylines.
@@ -83,15 +85,15 @@ crewai run
 
 * **Neo4j Graph**: Persistent story memory with nodes for worlds, scenes, choices, and NPCs.
 
-![Neo4j Graph](./media/neo4j_graph_example.png)
+![Neo4j Graph](./static/orion_neo4j_ss.png)
 
 * **Interactive Story**: Terminal-based narrative including scenes and player choices.
 
-![Terminal Gameplay](./media/terminal_gameplay_example.png)
+![Terminal Gameplay](./static/orion_player_action.png)
 
 * **Plot Skeleton**: Summarized story arcs for guiding future endings.
 
-![Plot Skeleton](./media/plot_skeleton_example.png)
+![Plot Skeleton](./static/orion_plot_skeleton.png)
 
 ---
 
